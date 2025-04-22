@@ -12,6 +12,7 @@ body {
     margin: 40px auto;
     background-color: #000;
     border: 3px solid #fff;
+    overflow: hidden;
 }
 
 canvas {
@@ -20,10 +21,28 @@ canvas {
     height: 100%;
 }
 
-#score {
+#hud {
     position: absolute;
     top: 10px;
     left: 10px;
     color: white;
-    font-size: 20px;
+    font-size: 18px;
+    display: flex;
+    gap: 20px;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 30px;
+    border: 2px solid red;
+}
+
+.hidden {
+    display: none;
 }

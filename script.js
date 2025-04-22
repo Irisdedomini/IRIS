@@ -16,14 +16,14 @@ const keys = {};
 const bullets = [];
 const enemies = [];
 let score = 0;
+let lives = 3;
+let gameOver = false;
 
-// Movimiento continuo
 document.addEventListener('keydown', e => keys[e.key] = true);
 document.addEventListener('keyup', e => keys[e.key] = false);
 
-// Disparo
 document.addEventListener('keydown', (e) => {
-    if (e.key === ' ') {
+    if (e.key === ' ' && !gameOver) {
         bullets.push({
             x: player.x + player.width,
             y: player.y + player.height / 2 - 2.5,
@@ -35,58 +35,73 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Crear enemigos cada cierto tiempo
-setInterval(() => {
-    enemies.push({
-        x: canvas.width,
-        y: Math.random() * (canvas.height - 40),
-        width: 40,
-        height: 40,
-        speed: 2 + Math.random() * 2,
-        color: 'green'
-    });
+// Generar enemigos
+let enemyInterval = setInterval(() => {
+    if (!gameOver) {
+        enemies.push({
+            x: canvas.width,
+            y: Math.random() * (canvas.height - 40),
+            width: 40,
+            height: 40,
+            speed: 2 + Math.random() * 2,
+            color: 'green'
+        });
+    }
 }, 1500);
 
-// Actualizar lógica
 function update() {
+    if (gameOver) return;
+
     // Movimiento del jugador
     if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
     if (keys['ArrowDown'] && player.y < canvas.height - player.height) player.y += player.speed;
     if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
     if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
 
-    // Mover balas
+    // Balas
     bullets.forEach((b, i) => {
         b.x += b.speed;
         if (b.x > canvas.width) bullets.splice(i, 1);
     });
 
-    // Mover enemigos
+    // Enemigos
     enemies.forEach((e, i) => {
         e.x -= e.speed;
         if (e.x + e.width < 0) enemies.splice(i, 1);
+
+        // Colisión con jugador
+        if (e.x < player.x + player.width &&
+            e.x + e.width > player.x &&
+            e.y < player.y + player.height &&
+            e.y + e.height > player.y) {
+            enemies.splice(i, 1);
+            lives--;
+            updateLives();
+            if (lives <= 0) {
+                endGame();
+            }
+        }
     });
 
-    // Colisiones
+    // Colisiones bala/enemigo
     bullets.forEach((b, bi) => {
         enemies.forEach((e, ei) => {
             if (b.x < e.x + e.width &&
                 b.x + b.width > e.x &&
                 b.y < e.y + e.height &&
                 b.y + b.height > e.y) {
-                // Eliminar enemigo y bala
                 bullets.splice(bi, 1);
                 enemies.splice(ei, 1);
                 score += 10;
-                document.getElementById('score').textContent = `Puntos: ${score}`;
+                updateScore();
             }
         });
     });
 }
 
-// Dibujar todo
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     // Jugador
     ctx.fillStyle = player.color;
     ctx.fillRect(player.x, player.y, player.width, player.height);
@@ -102,6 +117,43 @@ function draw() {
         ctx.fillStyle = e.color;
         ctx.fillRect(e.x, e.y, e.width, e.height);
     });
+}
+
+function updateScore() {
+    document.getElementById('score').textContent = `Puntos: ${score}`;
+}
+
+function updateLives() {
+    document.getElementById('lives').textContent = `Vidas: ${lives}`;
+}
+
+function endGame() {
+    gameOver = true;
+    clearInterval(enemyInterval);
+    document.getElementById('game-over').classList.remove('hidden');
+}
+
+function restartGame() {
+    score = 0;
+    lives = 3;
+    gameOver = false;
+    enemies.length = 0;
+    bullets.length = 0;
+    player.x = 50;
+    player.y = canvas.height / 2 - 25;
+    updateScore();
+    updateLives();
+    document.getElementById('game-over').classList.add('hidden');
+    enemyInterval = setInterval(() => {
+        enemies.push({
+            x: canvas.width,
+            y: Math.random() * (canvas.height - 40),
+            width: 40,
+            height: 40,
+            speed: 2 + Math.random() * 2,
+            color: 'green'
+        });
+    }, 1500);
 }
 
 function gameLoop() {

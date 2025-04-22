@@ -1,53 +1,113 @@
-// Obtener el canvas y el contexto
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-
-// Establecer las dimensiones del canvas
 canvas.width = 800;
 canvas.height = 600;
 
-// Variables del jugador
 const player = {
     x: 50,
-    y: canvas.height / 2,
+    y: canvas.height / 2 - 25,
     width: 50,
     height: 50,
-    speed: 5,
+    speed: 4,
     color: 'blue'
 };
 
-// Dibujar al jugador
-function drawPlayer() {
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-}
+const keys = {};
+const bullets = [];
+const enemies = [];
+let score = 0;
 
-// Actualizar la posición del jugador
-function updatePlayerPosition() {
-    // Movimiento básico con las teclas de flecha
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'ArrowUp' && player.y > 0) {
-            player.y -= player.speed;
-        }
-        if (event.key === 'ArrowDown' && player.y < canvas.height - player.height) {
-            player.y += player.speed;
-        }
-        if (event.key === 'ArrowLeft' && player.x > 0) {
-            player.x -= player.speed;
-        }
-        if (event.key === 'ArrowRight' && player.x < canvas.width - player.width) {
-            player.x += player.speed;
-        }
+// Movimiento continuo
+document.addEventListener('keydown', e => keys[e.key] = true);
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+// Disparo
+document.addEventListener('keydown', (e) => {
+    if (e.key === ' ') {
+        bullets.push({
+            x: player.x + player.width,
+            y: player.y + player.height / 2 - 2.5,
+            width: 10,
+            height: 5,
+            speed: 7,
+            color: 'red'
+        });
+    }
+});
+
+// Crear enemigos cada cierto tiempo
+setInterval(() => {
+    enemies.push({
+        x: canvas.width,
+        y: Math.random() * (canvas.height - 40),
+        width: 40,
+        height: 40,
+        speed: 2 + Math.random() * 2,
+        color: 'green'
+    });
+}, 1500);
+
+// Actualizar lógica
+function update() {
+    // Movimiento del jugador
+    if (keys['ArrowUp'] && player.y > 0) player.y -= player.speed;
+    if (keys['ArrowDown'] && player.y < canvas.height - player.height) player.y += player.speed;
+    if (keys['ArrowLeft'] && player.x > 0) player.x -= player.speed;
+    if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += player.speed;
+
+    // Mover balas
+    bullets.forEach((b, i) => {
+        b.x += b.speed;
+        if (b.x > canvas.width) bullets.splice(i, 1);
+    });
+
+    // Mover enemigos
+    enemies.forEach((e, i) => {
+        e.x -= e.speed;
+        if (e.x + e.width < 0) enemies.splice(i, 1);
+    });
+
+    // Colisiones
+    bullets.forEach((b, bi) => {
+        enemies.forEach((e, ei) => {
+            if (b.x < e.x + e.width &&
+                b.x + b.width > e.x &&
+                b.y < e.y + e.height &&
+                b.y + b.height > e.y) {
+                // Eliminar enemigo y bala
+                bullets.splice(bi, 1);
+                enemies.splice(ei, 1);
+                score += 10;
+                document.getElementById('score').textContent = `Puntos: ${score}`;
+            }
+        });
     });
 }
 
-// Función principal de actualización del juego
-function gameLoop() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
-    drawPlayer(); // Dibujar al jugador
-    requestAnimationFrame(gameLoop); // Llamar de nuevo a la función de animación
+// Dibujar todo
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Jugador
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+
+    // Balas
+    bullets.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.width, b.height);
+    });
+
+    // Enemigos
+    enemies.forEach(e => {
+        ctx.fillStyle = e.color;
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+    });
 }
 
-// Iniciar el juego
-updatePlayerPosition();
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
 gameLoop();

@@ -1,23 +1,29 @@
-/* style.css */
 body {
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #333;
+    background-color: #111;
+    font-family: sans-serif;
 }
 
 #game-container {
     position: relative;
     width: 800px;
     height: 600px;
+    margin: 40px auto;
     background-color: #000;
+    border: 3px solid #fff;
 }
 
 canvas {
+    display: block;
     width: 100%;
     height: 100%;
-    border: 2px solid white;
+}
+
+#score {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-size: 20px;
 }
